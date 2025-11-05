@@ -1,60 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Report.css";
+import MalariaForm from "../MalariaForm";
+import DiabetesForm from "../DiabetesForm";
+import HealthPrediction from "../HealthPrediction";
 
 const Report = () => {
   const navigate = useNavigate();
-  const [activeForm, setActiveForm] = useState("malaria");
+  const [activeForm, setActiveForm] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-
-  const [malariaData, setMalariaData] = useState({
-    Age: "",
-    Body_Temperature: "",
-    Hemoglobin: "",
-    RBC_Count: "",
-    Platelet_Count: "",
-    Has_Fever: false,
-    Has_Chills: false,
-    Has_Vomiting: false,
-    Rainy_Season: false,
-  });
-
-  const [diabetesData, setDiabetesData] = useState({
-    Pregnancies: "",
-    Glucose: "",
-    BloodPressure: "",
-    SkinThickness: "",
-    Insulin: "",
-    BMI: "",
-    DiabetesPedigreeFunction: "",
-    Age: "",
-  });
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     navigate("/login");
   };
 
-  const handleMalariaChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setMalariaData({
-      ...malariaData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  const handleDiabetesChange = (e) => {
-    const { name, value } = e.target;
-    setDiabetesData({
-      ...diabetesData,
-      [name]: value,
-    });
-  };
-
-  const handleMalariaSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleMalariaSubmit = async (malariaData, resetForm) => {
     const {
       Age,
       Body_Temperature,
@@ -114,34 +76,19 @@ const Report = () => {
           Malaria Result: ${data?.Result === 1 ? "Positive" : "Negative"}
         </strong><br/><br />
         <span style="font-size: 16px; color: #374151;">
-          Confidence:${
-            data?.confidence || "N/A"
-          }
+          Confidence:${data?.confidence || "N/A"}
         </span>
       `);
 
       setShowPopup(true);
-
-      setMalariaData({
-        Age: "",
-        Body_Temperature: "",
-        Hemoglobin: "",
-        RBC_Count: "",
-        Platelet_Count: "",
-        Has_Fever: false,
-        Has_Chills: false,
-        Has_Vomiting: false,
-        Rainy_Season: false,
-      });
+      resetForm();
     } catch (error) {
       setPopupMessage(error.message || "Something went wrong!");
       setShowPopup(true);
     }
   };
 
-  const handleDiabetesSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleDiabetesSubmit = async (diabetesData, resetForm) => {
     const {
       Pregnancies,
       Glucose,
@@ -197,24 +144,112 @@ const Report = () => {
 
       setPopupMessage(`
         <strong style="font-size: 20px; color: ${
-          data?.Outcome === 1 ? '#dc2626' : '#2563eb'
+          data?.Outcome === 1 ? "#dc2626" : "#2563eb"
         };">
           Diabetes Result: ${data?.Outcome === 1 ? "Positive" : "Negative"}
         </strong>
       `);
-      
-      setShowPopup(true);
 
-      setDiabetesData({
-        Pregnancies: "",
-        Glucose: "",
-        BloodPressure: "",
-        SkinThickness: "",
-        Insulin: "",
-        BMI: "",
-        DiabetesPedigreeFunction: "",
-        Age: "",
-      });
+      setShowPopup(true);
+      resetForm();
+    } catch (error) {
+      setPopupMessage(error.message || "Something went wrong!");
+      setShowPopup(true);
+    }
+  };
+
+  const handleHealthSubmit = async (healthData, resetForm) => {
+    const {
+      age,
+      gender,
+      temperature,
+      heart_rate,
+      systolic_bp,
+      diastolic_bp,
+      glucose_level,
+      oxygen_level,
+      bmi,
+      cough,
+      fatigue,
+      headache,
+      nausea,
+      chest_pain,
+      shortness_of_breath,
+      vision_problem,
+      frequent_urination,
+      joint_pain,
+    } = healthData;
+
+    if (
+      !age ||
+      !gender ||
+      !temperature ||
+      !heart_rate ||
+      !systolic_bp ||
+      !diastolic_bp ||
+      !glucose_level ||
+      !oxygen_level ||
+      !bmi ||
+      !cough ||
+      !fatigue ||
+      !headache ||
+      !nausea ||
+      !chest_pain ||
+      !shortness_of_breath ||
+      !vision_problem ||
+      !frequent_urination ||
+      !joint_pain
+    ) {
+      setPopupMessage("Please fill all required fields before submitting!");
+      setShowPopup(true);
+      return;
+    }
+
+    const payload = {
+      age: Number(age),
+      gender,
+      temperature: Number(temperature),
+      heart_rate: Number(heart_rate),
+      systolic_bp: Number(systolic_bp),
+      diastolic_bp: Number(diastolic_bp),
+      glucose_level: Number(glucose_level),
+      oxygen_level: Number(oxygen_level),
+      bmi: Number(bmi),
+      cough,
+      fatigue,
+      headache,
+      nausea,
+      chest_pain,
+      shortness_of_breath,
+      vision_problem,
+      frequent_urination,
+      joint_pain,
+    };
+
+    try {
+      const res = await fetch(
+        "https://health-result-project.onrender.com/healthpredict",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.detail?.[0]?.msg || "Server Error!");
+      }
+
+      setPopupMessage(`
+        <strong style="font-size: 20px; color: #dc2626;">
+          Health Result: ${data?.predicted_disease}
+        </strong>
+      `);      
+
+      setShowPopup(true);
+      resetForm();
     } catch (error) {
       setPopupMessage(error.message || "Something went wrong!");
       setShowPopup(true);
@@ -242,125 +277,28 @@ const Report = () => {
 
       <div className="flex flex-col items-center py-8 space-y-6 relative z-10">
         <h2 className="text-2xl font-bold text-gray-800">Choose AI Action</h2>
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveForm("malaria")}
-            className={`px-6 py-2 rounded-full font-semibold transition cursor-pointer duration-300 ${
-              activeForm === "malaria"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Malaria
-          </button>
-          <button
-            onClick={() => setActiveForm("diabetes")}
-            className={`px-6 py-2 rounded-full font-semibold transition duration-300 cursor-pointer ${
-              activeForm === "diabetes"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Diabetes
-          </button>
-        </div>
+
+        <select
+          className="border border-gray-300 rounded-md px-4 py-2 bg-white shadow-sm cursor-pointer text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={activeForm}
+          onChange={(e) => setActiveForm(e.target.value)}
+        >
+          <option value="">Select an AI Option</option>
+          <option value="malaria">Malaria Prediction</option>
+          <option value="diabetes">Diabetes Prediction</option>
+          <option value="health">Health Prediction</option>
+        </select>
       </div>
 
       <div className="flex justify-center mb-10 relative z-10">
         {activeForm === "malaria" && (
-          <form
-            onSubmit={handleMalariaSubmit}
-            className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl space-y-6"
-          >
-            <h2 className="text-xl font-bold text-blue-700 text-center">
-              Send Malaria Report
-            </h2>
-
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Age",
-                "Body_Temperature",
-                "Hemoglobin",
-                "RBC_Count",
-                "Platelet_Count",
-              ].map((key) => (
-                <label key={key} className="text-left">
-                  <span className="block text-sm font-medium text-gray-700 mb-1">
-                    {key.replace("_", " ")}
-                  </span>
-                  <input
-                    type="number"
-                    name={key}
-                    placeholder={key.replace("_", " ")}
-                    value={malariaData[key]}
-                    onChange={handleMalariaChange}
-                    required
-                    className="border rounded-md px-3 py-2 w-full"
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-4 justify-center mt-4">
-              {["Has_Fever", "Has_Chills", "Has_Vomiting", "Rainy_Season"].map(
-                (item) => (
-                  <label key={item} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      name={item}
-                      checked={malariaData[item]}
-                      onChange={handleMalariaChange}
-                    />
-                    <span className="capitalize">{item.replace("_", " ")}</span>
-                  </label>
-                )
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition duration-300"
-            >
-              Send Report
-            </button>
-          </form>
+          <MalariaForm onSubmit={handleMalariaSubmit} />
         )}
-
         {activeForm === "diabetes" && (
-          <form
-            onSubmit={handleDiabetesSubmit}
-            className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl space-y-6"
-          >
-            <h2 className="text-xl font-bold text-blue-700 text-center">
-              Send Diabetes Report
-            </h2>
-
-            <div className="grid grid-cols-2 gap-4">
-              {Object.keys(diabetesData).map((key) => (
-                <label key={key} className="text-left">
-                  <span className="block text-sm font-medium text-gray-700 mb-1">
-                    {key.replace("_", " ")}
-                  </span>
-                  <input
-                    type="number"
-                    name={key}
-                    placeholder={key.replace("_", " ")}
-                    value={diabetesData[key]}
-                    onChange={handleDiabetesChange}
-                    required
-                    className="border rounded-md px-3 py-2 w-full"
-                  />
-                </label>
-              ))}
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition duration-300 cursor-pointer"
-            >
-              Send Report
-            </button>
-          </form>
+          <DiabetesForm onSubmit={handleDiabetesSubmit} />
+        )}
+        {activeForm === "health" && (
+          <HealthPrediction onSubmit={handleHealthSubmit} />
         )}
       </div>
 
