@@ -56,7 +56,6 @@ const HealthPrediction = ({ onSubmit }) => {
     });
   };
 
-  // Numeric fields
   const numericFields = [
     "age",
     "temperature",
@@ -68,7 +67,6 @@ const HealthPrediction = ({ onSubmit }) => {
     "bmi",
   ];
 
-  // Yes/No fields (symptoms)
   const yesNoFields = [
     "cough",
     "fatigue",
@@ -96,7 +94,6 @@ const HealthPrediction = ({ onSubmit }) => {
       </h2>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Numeric Inputs */}
         {numericFields.map((key) => (
           <label key={key} className="text-left">
             <span className="block text-sm font-medium text-gray-700 mb-1">
@@ -114,7 +111,6 @@ const HealthPrediction = ({ onSubmit }) => {
           </label>
         ))}
 
-        {/* Gender Field */}
         <label className="text-left">
           <span className="block text-sm font-medium text-gray-700 mb-1">
             Gender
@@ -132,7 +128,6 @@ const HealthPrediction = ({ onSubmit }) => {
           </select>
         </label>
 
-        {/* Yes/No Dropdowns for Symptoms */}
         {yesNoFields.map((key) => (
           <label key={key} className="text-left">
             <span className="block text-sm font-medium text-gray-700 mb-1">
